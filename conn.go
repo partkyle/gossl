@@ -7,7 +7,10 @@ package gossl
 */
 import "C"
 
-import "time"
+import (
+	"runtime"
+	"time"
+)
 import "net"
 import "fmt"
 
@@ -32,7 +35,13 @@ func newConn(ctx *Context, conn net.Conn) (*Conn, error) {
 		conn: conn}
 	self.bio.SetAppData(self)
 	self.ssl.SetBIO(self.bio, self.bio)
+
+	runtime.SetFinalizer(conn, self.connFinalizer)
 	return self, nil
+}
+
+func (c *Conn) connFinalizer() {
+	C.BIO_free(c.bio)
 }
 
 // create a new server connection
